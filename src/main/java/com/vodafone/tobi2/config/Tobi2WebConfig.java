@@ -11,7 +11,7 @@ public class Tobi2WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/tobi2/**")
-                .allowedOriginPatterns("*")
+                .allowedOriginPatterns("https://*.fly.dev", "http://localhost:*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);

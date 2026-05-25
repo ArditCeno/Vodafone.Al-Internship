@@ -1,0 +1,76 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: tobi-albania-backend
+  
+  # Redis for conversation session storage
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000
+  
+  # Security
+  security:
+    user:
+      name: ${TOBI_ADMIN_USER:admin}
+      password: ${TOBI_ADMIN_PASSWORD:changeme}
+
+# IBM watsonx Assistant Configuration
+watsonx:
+  assistant:
+    url: ${WATSONX_ASSISTANT_URL:https://api.us-south.assistant.watson.cloud.ibm.com}
+    apikey: ${WATSONX_APIKEY:mock-api-key-for-local-dev}
+    assistant-id: ${WATSONX_ASSISTANT_ID:mock-assistant-id}
+    version: "2024-01-01"
+    session-timeout-minutes: 30
+  
+  # Language model for advanced NLP
+  ai:
+    url: ${WATSONX_AI_URL:https://us-south.ml.cloud.ibm.com}
+    project-id: ${WATSONX_PROJECT_ID:your-project-id}
+    model-id: ${WATSONX_MODEL_ID:ibm/granite-13b-chat-v2}
+
+# Genesys Cloud CX Configuration
+genesys:
+  cloud:
+    base-url: ${GENESYS_BASE_URL:https://api.mypurecloud.com}
+    client-id: ${GENESYS_CLIENT_ID:your-client-id}
+    client-secret: ${GENESYS_CLIENT_SECRET:your-client-secret}
+    region: ${GENESYS_REGION:us_east_1}
+    queue-id: ${GENESYS_QUEUE_ID:your-queue-id}
+    language: al
+    timeout-seconds: 30
+
+# Vodafone Backend APIs
+vodafone:
+  api:
+    billing:
+      url: ${BILLING_API_URL:https://internal-api.vodafone.al/billing/v1}
+      api-key: ${BILLING_API_KEY:your-billing-api-key}
+    crm:
+      url: ${CRM_API_URL:https://internal-api.vodafone.al/crm/v1}
+      api-key: ${CRM_API_KEY:your-crm-api-key}
+    provisioning:
+      url: ${PROVISIONING_API_URL:https://internal-api.vodafone.al/provisioning/v1}
+      api-key: ${PROVISIONING_API_KEY:your-provisioning-api-key}
+
+# Logging
+logging:
+  level:
+    com.vodafone.tobi: DEBUG
+    com.ibm.watson: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

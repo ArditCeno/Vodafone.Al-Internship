@@ -1,0 +1,45 @@
+# Maven build output
+target/
+*.jar
+*.war
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# H2 Database runtime files
+data/
+
+# Node / Frontend
+node_modules/
+src/Tobi2/frontend/node_modules/
+src/Tobi2/frontend/dist/
+
+# Build output
+out/
+
+# Runtime files
+*.log
+app.pid
+
+# Auto-generated classpath files
+args.txt
+cp.txt
+cp_combined.txt
+
+# Garbage files
+nul
+src/nul
+
+# Application config with hardcoded API keys
+# Use application-tobi2.yml.example as a template instead
+src/main/resources/application-tobi2.yml

@@ -1,0 +1,57 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /
+spring:
+  application:
+    name: tobi2-backend
+  datasource:
+    url: jdbc:h2:file:./data/tobi2db;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+tobi2:
+  prompt:
+    version: v1
+  llm:
+    provider: mock
+  evaluator:
+    provider: mock
+  speech:
+    provider: mock
+    stt-language: sq-AL
+    tts-language: sq-AL
+  translation:
+    provider: mock
+  vision:
+    api-key: ${TOBI2_VISION_API_KEY}
+    model: gemini-2.0-flash
+    max-file-size-mb: 10
+    allowed-types: image/jpeg,image/png,image/webp
+  ocr:
+    api-key: ${TOBI2_OCR_API_KEY}
+    api-url: https://api.ocr.space/parse/image
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    tags:
+      application: tobi2
+logging:
+  level:
+    com.vodafone.tobi2: DEBUG

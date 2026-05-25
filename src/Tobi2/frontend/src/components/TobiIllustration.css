@@ -1,0 +1,263 @@
+.tobi-character {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tobi-character svg {
+  overflow: visible;
+}
+
+.tobi-eye-group {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tobi-particle {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.listening .tobi-particle,
+.speaking .tobi-particle,
+.thinking .tobi-particle {
+  opacity: 1;
+}
+
+.tobi-particle-ring {
+  transform-origin: center;
+  animation: particleRotate 4s linear infinite;
+}
+
+.tobi-particle-dot {
+  animation: particlePulse 2s ease-in-out infinite;
+}
+
+.tobi-particle-dot:nth-child(2) { animation-delay: 0.4s; }
+.tobi-particle-dot:nth-child(3) { animation-delay: 0.8s; }
+.tobi-particle-dot:nth-child(4) { animation-delay: 1.2s; }
+.tobi-particle-dot:nth-child(5) { animation-delay: 1.6s; }
+
+@keyframes particleRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes particlePulse {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 0.8; transform: scale(1); }
+}
+
+.tobi-arm {
+  transform-box: fill-box;
+  transform-origin: right center;
+}
+
+.tobi-arm-left {
+  transform-origin: right center;
+}
+
+.tobi-arm-right {
+  transform-origin: left center;
+}
+
+/* ── IDLE ── */
+.tobi-character.idle {
+  animation: tobiFloat 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.tobi-character.idle .tobi-shadow {
+  animation: tobiShadowPulse 3.5s ease-in-out infinite;
+}
+.tobi-character.idle .tobi-eye-group {
+  animation: tobiBlink 4.5s ease-in-out infinite;
+}
+.tobi-character.idle .tobi-glow {
+  animation: tobiGlowIdle 3.5s ease-in-out infinite;
+}
+.tobi-character.idle .tobi-antenna-ball {
+  animation: tobiAntennaIdle 4s ease-in-out infinite;
+}
+
+/* ── LISTENING ── */
+.tobi-character.listening {
+  animation: tobiFloat 2.5s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-glow {
+  animation: tobiGlowListen 1.5s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-antenna-ball {
+  animation: tobiAntennaActive 0.8s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-chest-led {
+  animation: tobiChestPulse 0.6s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-eye-group {
+  animation: tobiBlink 3s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-mouth {
+  animation: tobiSmile 2s ease-in-out infinite;
+}
+.tobi-character.listening .tobi-ear-left,
+.tobi-character.listening .tobi-ear-right {
+  animation: tobiEarPulse 1.5s ease-in-out infinite;
+}
+/* ── THINKING ── */
+.tobi-character.thinking {
+  animation: tobiThink 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.tobi-character.thinking .tobi-shadow {
+  animation: tobiShadowPulse 2.2s ease-in-out infinite;
+}
+.tobi-character.thinking .tobi-mouth {
+  opacity: 0;
+}
+.tobi-character.thinking .tobi-eye-group {
+  animation: tobiThinkEyes 2.2s ease-in-out infinite;
+}
+.tobi-character.thinking .tobi-glow {
+  animation: tobiGlowThink 2.2s ease-in-out infinite;
+}
+.tobi-character.thinking .tobi-antenna-ball {
+  animation: tobiAntennaThink 1s ease-in-out infinite;
+}
+
+/* ── SPEAKING ── */
+.tobi-character.speaking {
+  animation: tobiFloat 1.4s ease-in-out infinite;
+}
+.tobi-character.speaking .tobi-chest-led {
+  animation: tobiChestPulse 0.2s ease-in-out infinite;
+}
+.tobi-character.speaking .tobi-mouth {
+  animation: tobiTalk 0.15s ease-in-out infinite alternate;
+}
+.tobi-character.speaking .tobi-shadow {
+  animation: tobiShadowPulse 1.4s ease-in-out infinite;
+}
+.tobi-character.speaking .tobi-glow {
+  animation: tobiGlowSpeak 1.4s ease-in-out infinite;
+}
+.tobi-character.speaking .tobi-antenna-ball {
+  animation: tobiAntennaActive 0.5s ease-in-out infinite;
+}
+
+/* ── HOVER ── */
+.tobi-character:hover {
+  transform: scale(1.12);
+  cursor: pointer;
+}
+.tobi-character:hover .tobi-arm-left {
+  animation: tobiWave 0.6s ease-in-out infinite;
+}
+.tobi-character:hover .tobi-glow {
+  opacity: 0.3 !important;
+}
+
+/* ── KEYFRAMES ── */
+@keyframes tobiFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes tobiShadowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.06; }
+  50% { transform: scale(0.78); opacity: 0.02; }
+}
+
+@keyframes tobiBlink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+@keyframes tobiGlowIdle {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.18; }
+}
+
+@keyframes tobiGlowListen {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.05); }
+}
+
+@keyframes tobiGlowThink {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.08); }
+}
+
+@keyframes tobiGlowSpeak {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes tobiAntennaIdle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes tobiAntennaActive {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes tobiAntennaThink {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  30% { opacity: 1; transform: scale(1.4); }
+  60% { opacity: 0.6; transform: scale(0.9); }
+}
+
+@keyframes tobiChestPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.15; }
+}
+
+@keyframes tobiThink {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-14px); }
+  50% { transform: translateY(-4px); }
+  75% { transform: translateY(-8px); }
+}
+
+@keyframes tobiThinkEyes {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+@keyframes tobiTalk {
+  0% { opacity: 0.4; transform: scaleY(0.6); }
+  100% { opacity: 1; transform: scaleY(1.3); }
+}
+
+@keyframes tobiSmile {
+  0%, 100% { d: path("M54 54 Q60 60 66 54"); }
+  50% { d: path("M52 52 Q60 62 68 52"); }
+}
+
+@keyframes tobiWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-25deg); }
+  50% { transform: rotate(-10deg); }
+  75% { transform: rotate(-20deg); }
+}
+
+@keyframes tobiEarPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ── Dark mode ── */
+[data-theme="dark"] .tobi-character circle[fill="#FFF5F5"] {
+  fill: #2a2a2e;
+}
+[data-theme="dark"] .tobi-character .tobi-eye {
+  fill: #ff4444;
+}
+[data-theme="dark"] .tobi-character .tobi-blush {
+  fill: #E60000;
+  opacity: 0.15;
+}
+[data-theme="dark"] .tobi-character .tobi-shadow {
+  fill: rgba(255,255,255,0.04);
+}

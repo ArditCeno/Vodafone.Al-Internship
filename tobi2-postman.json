@@ -1,0 +1,167 @@
+{
+  "info": {
+    "name": "TOBi2 API",
+    "description": "Vodafone Albania TOBi2 Chatbot — local test collection\n\nBase URL: http://localhost:8081/api/tobi2\n\nFlow: Start Session -> Chat -> (optional) RAG / STT / TTS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Start Session",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/session/start?userId=test-user",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "session", "start"],
+          "query": [
+            { "key": "userId", "value": "test-user" }
+          ]
+        },
+        "description": "Creates a new chat session. Copy the sessionId from the response — you'll need it for /chat."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"sessionId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"userId\": \"test-user\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. Chat (non-streaming)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"message\": \"Sa kredi kam?\",\n    \"sessionId\": \"REPLACE_WITH_SESSION_ID\",\n    \"userId\": \"test-user\",\n    \"language\": \"sq\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/chat",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "chat"]
+        },
+        "description": "Send a message and get a bot response.\n\nLanguage flow: first message always returns the language picker prompt. Send \"1\" or \"2\" as a second message to select language."
+      },
+      "response": [
+        {
+          "name": "Language Prompt (first message)",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"sessionId\": \"...\",\n    \"message\": \"Përshëndetje! Zgjidhni gjuhën tuaj / Choose your language:\\n\\n**Shtypni 1** për Shqip\\n**Press 2** for English\",\n    \"language\": \"sq\",\n    \"evaluation\": null\n}"
+        },
+        {
+          "name": "After selecting language",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"sessionId\": \"...\",\n    \"message\": \"**Shqip u zgjodh!**\\n\\n**Kredia juaj aktuale**: 2,450 Lek...\",\n    \"language\": \"sq\",\n    \"evaluation\": {\n        \"brandTone\": 8,\n        \"accuracy\": 7,\n        \"feedback\": \"Response is relevant and clear.\"\n    }\n}"
+        }
+      ],
+      "example": [
+        {
+          "name": "English query",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"What's my balance?\",\n    \"sessionId\": \"REPLACE_WITH_SESSION_ID\",\n    \"userId\": \"test-user\",\n    \"language\": \"en\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Talk to agent",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"Dua te flas me agjent\",\n    \"sessionId\": \"REPLACE_WITH_SESSION_ID\",\n    \"userId\": \"test-user\",\n    \"language\": \"sq\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Chat (SSE streaming)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/chat/stream?message=Hello&sessionId=REPLACE_WITH_SESSION_ID&language=sq",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "chat", "stream"],
+          "query": [
+            { "key": "message", "value": "Hello" },
+            { "key": "sessionId", "value": "REPLACE_WITH_SESSION_ID" },
+            { "key": "language", "value": "sq" }
+          ]
+        },
+        "description": "SSE (Server-Sent Events) streaming endpoint. In Postman, the response arrives word-by-word.\nEach word is a separate SSE event. A 'complete' event signals the end."
+      }
+    },
+    {
+      "name": "4. RAG Search",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"query\": \"Unlimited Max\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/rag/search",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "rag", "search"]
+        },
+        "description": "Search the local knowledge base (Vodafone plans, pricing, etc.)"
+      }
+    },
+    {
+      "name": "5. Speech-to-Text (STT)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "audio", "type": "file", "src": "/path/to/audio.wav" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/stt",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "stt"]
+        },
+        "description": "Upload an audio file (WAV). Currently returns a mock transcript: 'Përshëndetje, dua të di sa kredi kam.'"
+      }
+    },
+    {
+      "name": "6. Text-to-Speech (TTS)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"Përshëndetje! Kredia juaj aktuale është 2,450 Lekë.\",\n    \"language\": \"sq-AL\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/tobi2/tts",
+          "host": ["http://localhost:8081"],
+          "path": ["api", "tobi2", "tts"]
+        },
+        "description": "Convert text to speech. Returns a WAV audio file. (Currently returns a mock beep sound.)"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081/api/tobi2"
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import com.vodafone.tobi2.config.Tobi2WebConfig;
 import com.vodafone.tobi2.controller.Tobi2Controller;
 import com.vodafone.tobi2.evaluation.AiEvaluatorService;
 import com.vodafone.tobi2.monitoring.ConversationMetricsService;
+import com.vodafone.tobi2.service.ConversationService;
+import com.vodafone.tobi2.service.JwtService;
 import com.vodafone.tobi2.service.OcrService;
 import com.vodafone.tobi2.service.RagService;
 import com.vodafone.tobi2.service.SpeechService;
@@ -21,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -57,6 +59,12 @@ class Tobi2ControllerTest {
 
     @MockBean
     private RestTemplate restTemplate;
+
+    @MockBean
+    private ConversationService conversationService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     @DisplayName("testChatEndpoint: POST /api/tobi2/chat -> 200 + valid response body")
@@ -152,6 +160,8 @@ class Tobi2ControllerTest {
     @Test
     @DisplayName("testStartSessionEndpoint: GET /api/tobi2/session/start -> 200 + UUID sessionId")
     void testStartSessionEndpoint() throws Exception {
+        when(conversationService.createSession(anyString())).thenReturn("test-session-uuid");
+
         mockMvc.perform(get("/api/tobi2/session/start")
                         .param("userId", "test-user"))
                 .andExpect(status().isOk())

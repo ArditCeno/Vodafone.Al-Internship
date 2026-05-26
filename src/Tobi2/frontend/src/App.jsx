@@ -21,8 +21,11 @@ const suggestions = [
 ]
 
 function App() {
-  const { user, loading: authLoading, error: authError, login, logout } = useAuth()
+  const { user, loading: authLoading, error: authError, conversations, login, register, logout, refreshConversations } = useAuth()
   const [activeTab, setActiveTab] = useState('chat')
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyMessages, setHistoryMessages] = useState([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const {
     messages,
@@ -112,10 +115,35 @@ function App() {
     }
   }
 
-  const handleLogin = useCallback(async (username, password, loginType) => {
-    const success = await login(username, password, loginType)
+  const handleLogin = useCallback(async (username, password) => {
+    const success = await login(username, password)
     return success
   }, [login])
+
+  const handleRegister = useCallback(async (username, fullName, password) => {
+    const success = await register(username, fullName, password)
+    return success
+  }, [register])
+
+  const openConversation = useCallback(async (sessionId) => {
+    setLoadingHistory(true)
+    setShowHistory(true)
+    try {
+      const stored = localStorage.getItem('tobi2_auth')
+      const token = stored ? JSON.parse(stored).token : ''
+      const res = await fetch(`/api/tobi2/conversations/${sessionId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to load')
+      const data = await res.json()
+      setHistoryMessages(data.messages || [])
+    } catch {
+      addToast('Gabim në ngarkimin e bisedës', 'error')
+      setHistoryMessages([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }, [addToast])
 
   const wrappedSendMessage = useCallback(async (text) => {
     try { await sendMessage(text) }
@@ -136,7 +164,7 @@ function App() {
   if (!user) {
     return (
       <div className="app-container">
-        <LoginPage onLogin={handleLogin} loading={authLoading} error={authError} />
+        <LoginPage onLogin={handleLogin} onRegister={handleRegister} loading={authLoading} error={authError} />
       </div>
     )
   }
@@ -158,6 +186,11 @@ function App() {
         )}
 
         <div className="app-header-bar">
+          <button className="history-toggle" onClick={() => setShowHistory(!showHistory)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </button>
           <div className="user-info">
             <div className="user-avatar">
               {user.fullName?.charAt(0) || 'U'}
@@ -199,11 +232,55 @@ function App() {
           </div>
         )}
 
+        {showHistory && (
+          <div className="history-sidebar">
+            <div className="history-header">
+              <h3>Bisedat e mëparshme</h3>
+              <button className="history-close" onClick={() => setShowHistory(false)}>×</button>
+            </div>
+            <div className="history-list">
+              {conversations.filter(c => c.title).map((conv) => (
+                <button
+                  key={conv.sessionId}
+                  className="history-item"
+                  onClick={() => openConversation(conv.sessionId)}
+                >
+                  <div className="history-item-title">{conv.title}</div>
+                  <div className="history-item-date">
+                    {conv.startedAt ? new Date(conv.startedAt).toLocaleDateString('sq-AL') : ''}
+                    {!conv.active && <span className="history-item-archived"> (arkivuar)</span>}
+                  </div>
+                </button>
+              ))}
+              {conversations.length === 0 && (
+                <div className="history-empty">Nuk ka biseda të mëparshme</div>
+              )}
+            </div>
+            {historyMessages.length > 0 && (
+              <div className="history-messages">
+                <div className="history-messages-header">
+                  <h4>Përmbajtja</h4>
+                  <button className="history-close-sm" onClick={() => setHistoryMessages([])}>×</button>
+                </div>
+                <div className="history-messages-list">
+                  {historyMessages.map((msg, i) => (
+                    <div key={i} className={`history-msg ${msg.role}`}>
+                      <span className="history-msg-label">{msg.role === 'user' ? 'Ti' : 'TOBi'}:</span>
+                      <span className="history-msg-text">{msg.content}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {loadingHistory && <div className="history-loading">Duke ngarkuar...</div>}
+          </div>
+        )}
+
         {activeTab === 'churn' && isVodafoneEmployee ? (
           <ChurnPage />
         ) : (
           <>
-            <div className="chat-header">
+            <div className={`chat-header ${showHistory ? 'with-sidebar' : ''}`}>
               <div className={`status-indicator ${isBotTyping ? 'typing' : ''}`} />
               <div className="header-info">
                 <h1>TOBi2</h1>
@@ -221,11 +298,11 @@ function App() {
             </div>
 
             <div
-              className="chat-messages"
+              className={`chat-messages ${showHistory ? 'with-sidebar' : ''}`}
               ref={messagesContainerRef}
               onScroll={handleScroll}
             >
-              {isEmpty && (
+              {isEmpty && !showHistory && (
                 <div className="empty-state">
                   <TobiIllustration size={100} state={tobiState} />
                   <h2>Mirë se vini, {user.fullName?.split(' ')[0] || ''}</h2>
@@ -243,6 +320,23 @@ function App() {
                       </button>
                     ))}
                   </div>
+                  {conversations.length > 0 && (
+                    <div className="previous-conversations">
+                      <h3>Bisedat e tua të mëparshme</h3>
+                      <div className="prev-conv-list">
+                        {conversations.filter(c => c.title).slice(0, 5).map((conv) => (
+                          <button
+                            key={conv.sessionId}
+                            className="prev-conv-item"
+                            onClick={() => openConversation(conv.sessionId)}
+                          >
+                            <span className="prev-conv-icon">💬</span>
+                            <span className="prev-conv-text">{conv.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

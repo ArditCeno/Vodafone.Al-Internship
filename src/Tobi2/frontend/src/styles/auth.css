@@ -261,6 +261,28 @@
   font-weight: 600;
 }
 
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--vf-red);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.link-btn:hover {
+  color: #cc0000;
+}
+
+.login-hint {
+  margin-top: 8px;
+  font-size: 10.5px !important;
+  color: var(--text-tertiary) !important;
+}
+
 @media (max-width: 420px) {
   .login-card-inner {
     padding: 24px 20px;

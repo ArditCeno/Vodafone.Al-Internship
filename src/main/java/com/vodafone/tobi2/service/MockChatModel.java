@@ -48,16 +48,7 @@ public class MockChatModel {
                 : "**To top up:**\n1. Buy a voucher at Vodafone stores\n2. Use the My Vodafone app\n3. Send voucher code to 140\n\nMinimum: 100 Lek";
         }
 
-        if (containsAny(m, "internet", "wifi", "rrjet", "data", "nuk kam", "terrnet", "net" )) {
-            int used = 5 + random.nextInt(15);
-            return isSq
-                ? ("**Perdorimi i internetit**: " + used + "GB nga 20GB\n\n" +
-                   "**Hapat per zgjidhje:**\n1. Rinisni telefonin\n2. Caktivizoni Modalitetin e Aeroplanit\n3. Dergoni SMS 'INTERNET' ne 140\n4. Kontrolloni nese keni kredi te mjaftueshme")
-                : ("**Data usage**: " + used + "GB out of 20GB\n\n" +
-                   "**Troubleshooting:**\n1. Restart your phone\n2. Turn off Airplane Mode\n3. Send SMS 'INTERNET' to 140\n4. Check if you have enough credit");
-        }
-
-        if (containsAny(m, "plan", "paket", "abonim", "offer", "oferta", "ndryshoj")) {
+        if (containsAny(m, "plan", "paket", "abonim", "offer", "oferta", "ndryshoj", "plane")) {
             return isSq
                 ? "**Planet me te mira Vodafone:**\n\n" +
                    "**Unlimited Max** - 1,500 Lek/muaj (5G i pakufizuar, 10GB roaming BE)\n" +
@@ -71,6 +62,15 @@ public class MockChatModel {
                    "**Unlimited M** - 700 Lek/month (20GB 5G)\n" +
                    "**Smart S** - 400 Lek/month (5GB 4G)\n\n" +
                    "Change plan by sending 'CHANGE' to 140";
+        }
+
+        if (containsAny(m, "internet", "wifi", "rrjet", "data", "nuk kam", "terrnet")) {
+            int used = 5 + random.nextInt(15);
+            return isSq
+                ? ("**Perdorimi i internetit**: " + used + "GB nga 20GB\n\n" +
+                   "**Hapat per zgjidhje:**\n1. Rinisni telefonin\n2. Caktivizoni Modalitetin e Aeroplanit\n3. Dergoni SMS 'INTERNET' ne 140\n4. Kontrolloni nese keni kredi te mjaftueshme")
+                : ("**Data usage**: " + used + "GB out of 20GB\n\n" +
+                   "**Troubleshooting:**\n1. Restart your phone\n2. Turn off Airplane Mode\n3. Send SMS 'INTERNET' to 140\n4. Check if you have enough credit");
         }
 
         if (containsAny(m, "roaming", "abroad", "jashtë", "eu", "be", "italy", "itali", "grek", "greqi")) {

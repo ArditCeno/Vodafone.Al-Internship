@@ -3,6 +3,8 @@ package com.vodafone.tobi2.controller;
 import com.vodafone.tobi2.agent.TobiAgent;
 import com.vodafone.tobi2.evaluation.AiEvaluatorService;
 import com.vodafone.tobi2.monitoring.ConversationMetricsService;
+import com.vodafone.tobi2.service.ConversationService;
+import com.vodafone.tobi2.service.JwtService;
 import com.vodafone.tobi2.service.RagService;
 import com.vodafone.tobi2.service.SpeechService;
 import com.vodafone.tobi2.service.OcrService;
@@ -40,6 +42,8 @@ public class Tobi2Controller {
     private final OcrService ocrService;
     private final AiEvaluatorService evaluatorService;
     private final ConversationMetricsService metricsService;
+    private final ConversationService conversationService;
+    private final JwtService jwtService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String visionApiKey;
@@ -50,6 +54,8 @@ public class Tobi2Controller {
                            SpeechService speechService, OcrService ocrService,
                            AiEvaluatorService evaluatorService,
                            ConversationMetricsService metricsService,
+                           ConversationService conversationService,
+                           JwtService jwtService,
                            RestTemplate restTemplate, ObjectMapper objectMapper,
                            Environment environment) {
         this.tobiAgent = tobiAgent;
@@ -58,6 +64,8 @@ public class Tobi2Controller {
         this.ocrService = ocrService;
         this.evaluatorService = evaluatorService;
         this.metricsService = metricsService;
+        this.conversationService = conversationService;
+        this.jwtService = jwtService;
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.visionApiKey = environment.getProperty("tobi2.vision.api-key", "");
@@ -65,14 +73,21 @@ public class Tobi2Controller {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> chat(
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         long start = System.currentTimeMillis();
         String message = request.get("message");
         String sessionId = request.getOrDefault("sessionId", UUID.randomUUID().toString());
-        String userId = request.getOrDefault("userId", "anonymous");
+        String userId = extractUserId(authHeader);
         String language = request.getOrDefault("language", "sq");
 
         String response = tobiAgent.chat(sessionId, userId, message, language);
+
+        saveConversationIfNew(userId, sessionId, message);
+        conversationService.addMessage(userId, sessionId, "user", message);
+        conversationService.addMessage(userId, sessionId, "assistant", response);
+
         var eval = evaluatorService.evaluate(sessionId, message, response);
         metricsService.recordConversation(sessionId, System.currentTimeMillis() - start);
 
@@ -95,14 +110,28 @@ public class Tobi2Controller {
             @RequestParam String message,
             @RequestParam(defaultValue = "sq") String language,
             @RequestParam(required = false) String sessionId,
-            @RequestParam(defaultValue = "anonymous") String userId) {
+            @RequestParam(defaultValue = "anonymous") String userIdParam,
+            @RequestParam(defaultValue = "") String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         String sid = sessionId != null ? sessionId : UUID.randomUUID().toString();
+        String effectiveAuth = (authHeader == null || authHeader.isBlank()) && !token.isBlank()
+            ? "Bearer " + token : authHeader;
+        String userId = extractUserId(effectiveAuth);
+        if ("anonymous".equals(userId) && !"anonymous".equals(userIdParam)) {
+            userId = userIdParam;
+        }
         SseEmitter emitter = new SseEmitter(60000L);
 
+        String finalUserId = userId;
         executor.execute(() -> {
             try {
-                String fullResponse = tobiAgent.chat(sid, userId, message, language);
+                String fullResponse = tobiAgent.chat(sid, finalUserId, message, language);
+
+                saveConversationIfNew(finalUserId, sid, message);
+                conversationService.addMessage(finalUserId, sid, "user", message);
+                conversationService.addMessage(finalUserId, sid, "assistant", fullResponse);
+
                 String[] words = fullResponse.split("(?<=\\s)");
                 for (String word : words) {
                     emitter.send(SseEmitter.event().data(word));
@@ -133,10 +162,12 @@ public class Tobi2Controller {
     public ResponseEntity<Map<String, Object>> chatWithPhoto(
             @RequestParam("photo") MultipartFile photo,
             @RequestParam(defaultValue = "sq") String language,
-            @RequestParam(required = false) String sessionId) {
+            @RequestParam(required = false) String sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         long start = System.currentTimeMillis();
         String sid = sessionId != null ? sessionId : UUID.randomUUID().toString();
+        String userId = extractUserId(authHeader);
         String fileName = photo.getOriginalFilename() != null ? photo.getOriginalFilename() : "image.jpg";
 
         if (photo.isEmpty()) {
@@ -164,6 +195,10 @@ public class Tobi2Controller {
                 log.info("Vision Gemini success for {}", fileName);
             }
         }
+
+        saveConversationIfNew(userId, sid, "[Foto] " + fileName);
+        conversationService.addMessage(userId, sid, "user", "[Foto] " + fileName);
+        conversationService.addMessage(userId, sid, "assistant", aiResponseText);
 
         metricsService.recordConversation(sid, System.currentTimeMillis() - start);
 
@@ -323,8 +358,43 @@ public class Tobi2Controller {
 
     @GetMapping("/session/start")
     public ResponseEntity<Map<String, String>> startSession(
-            @RequestParam(defaultValue = "anonymous") String userId) {
-        String sessionId = UUID.randomUUID().toString();
-        return ResponseEntity.ok(Map.of("sessionId", sessionId, "userId", userId));
+            @RequestParam(defaultValue = "anonymous") String userId,
+            @RequestParam(defaultValue = "") String token,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String effectiveAuth = (authHeader == null || authHeader.isBlank()) && !token.isBlank()
+            ? "Bearer " + token : authHeader;
+        String uid = extractUserId(effectiveAuth);
+        if ("anonymous".equals(uid) && !"anonymous".equals(userId)) {
+            uid = userId;
+        }
+        String sessionId = conversationService.createSession(uid);
+        log.debug("Started session {} for userId={}", sessionId, uid);
+        return ResponseEntity.ok(Map.of("sessionId", sessionId, "userId", uid));
+    }
+
+    private void saveConversationIfNew(String userId, String sessionId, String firstMessage) {
+        if (userId == null || "anonymous".equals(userId)) return;
+        var existing = conversationService.getConversation(sessionId);
+        if (existing.isEmpty()) {
+            conversationService.createSession(userId, sessionId);
+            String title = firstMessage.length() > 100 ? firstMessage.substring(0, 97) + "..." : firstMessage;
+            conversationService.updateSessionTitle(sessionId, title);
+        } else if (existing.get().title() == null) {
+            String title = firstMessage.length() > 100 ? firstMessage.substring(0, 97) + "..." : firstMessage;
+            conversationService.updateSessionTitle(sessionId, title);
+        }
+    }
+
+    private String extractUserId(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return "anonymous";
+        try {
+            String token = authHeader.substring(7);
+            if (jwtService.isValid(token)) {
+                return jwtService.getUserId(token);
+            }
+        } catch (Exception e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+        }
+        return "anonymous";
     }
 }

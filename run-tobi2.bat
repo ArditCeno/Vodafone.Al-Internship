@@ -11,5 +11,7 @@ if not exist "%MAVEN_HOME%\bin\mvn.cmd" (
     echo Done.
 )
 
-"%MAVEN_HOME%\bin\mvn.cmd" spring-boot:run -P tobi2 -Dspring-boot.run.profiles=tobi2
+echo Deleting old data...
+if exist "data" rmdir /s /q data
+"%MAVEN_HOME%\bin\mvn.cmd" clean spring-boot:run -P tobi2 -Dspring-boot.run.profiles=tobi2
 pause

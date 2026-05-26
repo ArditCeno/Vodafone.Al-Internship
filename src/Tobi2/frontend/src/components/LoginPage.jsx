@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import TobiIllustration from './TobiIllustration'
 
-function LoginPage({ onLogin, loading, error }) {
+function LoginPage({ onLogin, onRegister, loading, error }) {
+  const [mode, setMode] = useState('login')
   const [username, setUsername] = useState('')
+  const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
@@ -10,8 +12,17 @@ function LoginPage({ onLogin, loading, error }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!username.trim() || !password.trim()) return
-    const loginType = username.includes('@vodafone') ? 'vodafone' : 'regular'
-    onLogin(username.trim(), password, loginType)
+    if (mode === 'login') {
+      onLogin(username.trim(), password)
+    } else {
+      if (!fullName.trim()) return
+      onRegister(username.trim(), fullName.trim(), password)
+    }
+  }
+
+  const switchMode = () => {
+    setMode(mode === 'login' ? 'register' : 'login')
+    setError('')
   }
 
   return (
@@ -34,8 +45,8 @@ function LoginPage({ onLogin, loading, error }) {
       <div className="login-card">
         <div className="login-card-inner">
           <div className="login-header">
-            <h2>Hyr në llogari</h2>
-            <p>Vendos kredencialet e tua për të vazhduar</p>
+            <h2>{mode === 'login' ? 'Hyr në llogari' : 'Krijo llogari'}</h2>
+            <p>{mode === 'login' ? 'Vendos kredencialet e tua për të vazhduar' : 'Plotëso të dhënat për t\'u regjistruar'}</p>
           </div>
 
           {error && (
@@ -55,11 +66,29 @@ function LoginPage({ onLogin, loading, error }) {
                   onChange={(e) => setUsername(e.target.value)}
                   onFocus={() => setFocusedField('username')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="Emër Mbiemër, Numër ose email"
+                  placeholder={mode === 'login' ? "Emër Mbiemër ose email" : "Zgjidh një emër përdoruesi"}
                   autoComplete="username"
                 />
               </div>
             </div>
+
+            {mode === 'register' && (
+              <div className="login-field">
+                <label htmlFor="fullName">Emri i plotë</label>
+                <div className="input-wrapper">
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    onFocus={() => setFocusedField('fullName')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="Emri dhe Mbiemri"
+                    autoComplete="name"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="login-field">
               <label htmlFor="password">Fjalëkalimi</label>
@@ -72,7 +101,7 @@ function LoginPage({ onLogin, loading, error }) {
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
                   placeholder="Fjalëkalimi"
-                  autoComplete="current-password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 />
                 <button
                   type="button"
@@ -88,14 +117,25 @@ function LoginPage({ onLogin, loading, error }) {
             <button
               type="submit"
               className="login-btn"
-              disabled={loading || !username.trim() || !password.trim()}
+              disabled={loading || !username.trim() || !password.trim() || (mode === 'register' && !fullName.trim())}
             >
-              {loading ? 'Duke u autentikuar...' : 'Hyr në llogari'}
+              {loading
+                ? (mode === 'login' ? 'Duke u autentikuar...' : 'Duke u regjistruar...')
+                : (mode === 'login' ? 'Hyr në llogari' : 'Regjistrohu')}
             </button>
           </form>
 
           <div className="login-footer">
-            <p>Keni problem me hyrjen? Kontaktoni <strong>Administratorin</strong></p>
+            <p>
+              {mode === 'login' ? (
+                <>Nuk ke llogari? <button className="link-btn" onClick={switchMode}>Regjistrohu</button></>
+              ) : (
+                <>Ke tashmë llogari? <button className="link-btn" onClick={switchMode}>Hyr</button></>
+              )}
+            </p>
+            {mode === 'login' && (
+              <p className="login-hint">Punonjësit: përdorni email-in tuaj @vodafone</p>
+            )}
           </div>
         </div>
       </div>

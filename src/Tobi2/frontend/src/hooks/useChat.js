@@ -13,6 +13,17 @@ function getAuthHeaders() {
   }
 }
 
+function getUserId() {
+  const stored = localStorage.getItem('tobi2_auth')
+  if (!stored) return 'anonymous'
+  try {
+    const { userId } = JSON.parse(stored)
+    return userId || 'anonymous'
+  } catch {
+    return 'anonymous'
+  }
+}
+
 export function useChat() {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -25,7 +36,10 @@ export function useChat() {
   const startSession = useCallback(async () => {
     try {
       const headers = { ...getAuthHeaders() }
-      const res = await fetch(`${API_BASE}/session/start?userId=user-${Date.now()}`, { headers })
+      const userId = getUserId()
+      const stored = localStorage.getItem('tobi2_auth')
+      const token = stored ? JSON.parse(stored).token : ''
+      const res = await fetch(`${API_BASE}/session/start?userId=${userId}&token=${token}`, { headers })
       const data = await res.json()
       setSessionId(data.sessionId)
     } catch (err) {
@@ -56,8 +70,10 @@ export function useChat() {
     }
 
     try {
+      const stored = localStorage.getItem('tobi2_auth')
+      const token = stored ? JSON.parse(stored).token : ''
       const eventSource = new EventSource(
-        `${API_BASE}/chat/stream?message=${encodeURIComponent(text)}&sessionId=${sid}&language=sq`
+        `${API_BASE}/chat/stream?message=${encodeURIComponent(text)}&sessionId=${sid}&language=sq&token=${token}`
       )
 
       let fullText = ''

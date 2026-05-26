@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
   servlet:
     context-path: /
 spring:
@@ -37,12 +37,12 @@ tobi2:
   translation:
     provider: mock
   vision:
-    api-key: ${TOBI2_VISION_API_KEY}
+    api-key: ${TOBI2_VISION_API_KEY:mock}
     model: gemini-2.0-flash
     max-file-size-mb: 10
     allowed-types: image/jpeg,image/png,image/webp
   ocr:
-    api-key: ${TOBI2_OCR_API_KEY}
+    api-key: ${TOBI2_OCR_API_KEY:mock}
     api-url: https://api.ocr.space/parse/image
 management:
   endpoints:
